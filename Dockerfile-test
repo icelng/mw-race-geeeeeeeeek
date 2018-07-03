@@ -1,0 +1,12 @@
+# Runner container
+FROM registry.cn-hangzhou.aliyuncs.com/aliware2018/debian-jdk8
+
+COPY ./target/mwrace2018-geeks-demo-1.0.0-SNAPSHOT-exec.jar /root/dists/processor.jar
+COPY docker-entrypoint.sh /usr/local/bin
+
+RUN set -ex \
+ && chmod a+x /usr/local/bin/docker-entrypoint.sh \
+ && mkdir -p /root/logs \
+ && mkdir -p /root/result
+
+ENTRYPOINT ["docker-entrypoint.sh"]
