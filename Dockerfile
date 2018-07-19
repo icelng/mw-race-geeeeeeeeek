@@ -9,7 +9,7 @@ RUN set -ex && mvn clean package
 # Runner container
 FROM registry.cn-hangzhou.aliyuncs.com/aliware2018/debian-jdk8
 
-COPY --from=builder /root/workspace/target/mwrace2018-geeks-demo-1.0.0-SNAPSHOT.jar /root/dists/processor.jar
+COPY --from=builder /root/workspace/target/mwrace2018-geeks-demo-1.0.0-SNAPSHOT-exec.jar /root/dists/processor.jar
 COPY docker-entrypoint.sh /usr/local/bin
 
 RUN set -ex \
