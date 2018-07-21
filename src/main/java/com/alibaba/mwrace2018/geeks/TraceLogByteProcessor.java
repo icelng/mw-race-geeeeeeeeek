@@ -32,6 +32,8 @@ public class TraceLogByteProcessor implements ByteProcessor<Result> {
      */
     private final static int RPC_TYPE_SERVER = '2';
 
+    private final static int TERM_LEN = 512;
+
 
     private Result result = new Result();
     private IdlePageManager idlePageManager;

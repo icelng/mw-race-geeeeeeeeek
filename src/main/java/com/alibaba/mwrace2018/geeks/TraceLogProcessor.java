@@ -1,9 +1,15 @@
 package com.alibaba.mwrace2018.geeks;
 
+import com.google.common.io.CharSink;
+import com.google.common.io.Files;
 import com.google.common.io.LineProcessor;
+import org.springframework.beans.factory.annotation.Value;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
+import java.nio.charset.Charset;
+import java.util.*;
 
 /**
  * @author 奥陌
@@ -12,12 +18,22 @@ public class TraceLogProcessor implements LineProcessor<Result> {
 
     private static final int TIMEOUT_THRESHOLD = 200;
     private static final String RESULT_CODE_ERROR = "01";
+    private static final int TERM_LEN = 512;
+    private static final TraceLogComparator COMPARATOR = new TraceLogComparator();
 
     private IdlePageManager idlePageManager;
     private StoreIO storeIO;
     private ResidentPageCachePool residentPageCachePool;
 
+    private Map<String, TraceLogList> traceLogListMap = new HashMap<>();
+
+    private int curTerm = 0;
+    private int termDays = 0;
+
     private Result result = new Result();
+
+    @Value("${output.dir}")
+    private String outputDir;
 
 
     public TraceLogProcessor(IdlePageManager idlePageManager, StoreIO storeIO, ResidentPageCachePool residentPageCachePool) {
@@ -28,20 +44,43 @@ public class TraceLogProcessor implements LineProcessor<Result> {
     }
 
     @Override
-    public boolean processLine(String s) throws UnsupportedEncodingException {
+    public boolean processLine(String s) throws IOException {
         TraceLog traceLog = new TraceLog(s);
-        String seqNum = s.substring(21, 24);
+//        String seqNum = s.substring(21, 24);
 
-        if (!this.result.getSeqNumQueueMap().containsKey(seqNum)) {
-            /*如果不存在顺序号对应的队列*/
-            this.result.getSeqNumQueueMap().put(seqNum, new AppendedIndexMessageQueue(idlePageManager, storeIO,residentPageCachePool));
+        if (!traceLogListMap.containsKey(traceLog.getTraceId())) {
+            TraceLogList traceLogList = new TraceLogList();
+            traceLogList.getTraceLogs().add(traceLog);
+            traceLogListMap.put(traceLog.getTraceId(), traceLogList);
         }
 
-        MessageQueue seqNumMessageQueue = this.result.getSeqNumQueueMap().get(seqNum);
-        seqNumMessageQueue.put(s.getBytes("UTF-8"), s.length());
+        TraceLogList traceLogList = traceLogListMap.get(traceLog.getTraceId());
+        traceLogList.setTerm(curTerm);
 
         if (this.select(traceLog)) {
-            this.result.getTargetTraceIds().add(traceLog.getTraceId());
+            traceLogList.setTarget(true);
+        }
+
+        if (termDays++ >= TERM_LEN) {
+            /*满一任期*/
+            for (String traceId : traceLogListMap.keySet()) {
+                traceLogList = traceLogListMap.get(traceId);
+
+                if (traceLogList.getTerm() != curTerm) {
+                    /*当前任期无活动，则判决传输完毕*/
+                    if (traceLogList.isTarget()) {
+                        /*是输出目标*/
+                        String filePath = this.outputDir + "/" + traceId;
+                        CharSink sink = Files.asCharSink(new File(filePath), Charset.forName("UTF-8"));
+                        sink.writeLines(this.sort(traceLogList.getTraceLogs()));
+                    }
+                    traceLogListMap.remove(traceId);
+                }
+
+            }
+
+            termDays = 0;
+            curTerm++;
         }
 
         return true;
@@ -68,6 +107,15 @@ public class TraceLogProcessor implements LineProcessor<Result> {
             return true;
         }
         return log.getUserData() != null && log.getUserData().contains("@force=1");
+    }
+
+    private List<String> sort(List<TraceLog> logs) {
+        List<String> lines = new ArrayList<>(logs.size());
+        Collections.sort(logs, COMPARATOR);
+        for (TraceLog log : logs) {
+            lines.add(log.getLine());
+        }
+        return lines;
     }
 
 }

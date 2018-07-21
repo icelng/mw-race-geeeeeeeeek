@@ -62,67 +62,22 @@ public class Application implements CommandLineRunner {
     private Result process() throws IOException {
         LOGGER.info("dataUrl = {}", this.dataUrl);
 
-        storeIO = new StoreIO(outputDir + "/log", FILE_SIZE, REGION_SIZE);
-        idlePageManager = new SingleUseIdlePageManager(FILE_SIZE, 1024);
-        residentPageCachePool = new ResidentPageCachePool(65535, 1024);
+//        storeIO = new StoreIO(outputDir + "/log", FILE_SIZE, REGION_SIZE);
+//        idlePageManager = new SingleUseIdlePageManager(FILE_SIZE, 1024);
+//        residentPageCachePool = new ResidentPageCachePool(65535, 1024);
 
-        ByteSource byteSource = Resources.asByteSource(new URL(this.dataUrl));
-//        CharSource source = Resources.asCharSource(new URL(this.dataUrl), Charset.forName("UTF-8"));
+//        ByteSource byteSource = Resources.asByteSource(new URL(this.dataUrl));
+        CharSource source = Resources.asCharSource(new URL(this.dataUrl), Charset.forName("UTF-8"));
 //        URL url = Resources.getResource(this.dataUrl);
 //        CharSource source = Resources.asCharSource(url, Charset.forName("UTF-8"));
-//        TraceLogProcessor processor = new TraceLogProcessor(idlePageManager, storeIO, residentPageCachePool);
-        TraceLogByteProcessor processor = new TraceLogByteProcessor(idlePageManager, storeIO, residentPageCachePool);
-//        return source.readLines(processor);
-        return byteSource.read(processor);
+        TraceLogProcessor processor = new TraceLogProcessor(idlePageManager, storeIO, residentPageCachePool);
+//        TraceLogByteProcessor processor = new TraceLogByteProcessor(idlePageManager, storeIO, residentPageCachePool);
+        return source.readLines(processor);
+//        return byteSource.read(processor);
     }
 
     private void output(Result result) throws IOException {
         LOGGER.info("outputDir = {}", this.outputDir);
-
-        for (int i = 0;i < 65535;i++) {
-            LOGGER.info("seqNum:{}", i);
-            String seqNum = String.valueOf(i);
-            MessageQueue messageQueue = result.getSeqNumQueueMap().get(seqNum);
-
-            if (messageQueue == null) {
-                continue;
-            }
-
-            Map<String, List<TraceLog>> logsMap = new HashMap<>();
-            long offset = 0;
-            while (true) {
-                List<byte[]> lines = messageQueue.get(offset, 10);
-
-                for (byte[] line : lines) {
-                    String strLine = new String(line);
-                    TraceLog traceLog = new TraceLog(strLine);
-                    if (result.getTargetTraceIds().contains(traceLog.getTraceId())) {
-                        if (!logsMap.containsKey(traceLog.getTraceId())) {
-                            List<TraceLog> logs = new ArrayList<>();
-                            logsMap.put(traceLog.getTraceId(), logs);
-                        }
-
-                        List<TraceLog> logs = logsMap.get(traceLog.getTraceId());
-                        logs.add(traceLog);
-
-                    }
-                }
-
-                if (lines.size() < 10) {
-                    /*说明取空了*/
-                    break;
-                }
-                offset += 10;
-            }
-
-            for (String traceId : logsMap.keySet()) {
-                String filePath = this.outputDir + "/" + traceId;
-//            LOGGER.info("filePath = {}", filePath);
-                CharSink sink = Files.asCharSink(new File(filePath), Charset.forName("UTF-8"));
-                sink.writeLines(this.sort(logsMap.get(traceId)));
-            }
-
-        }
     }
 
     private List<String> sort(List<TraceLog> logs) {

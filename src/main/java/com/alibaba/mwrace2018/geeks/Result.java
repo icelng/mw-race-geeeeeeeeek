@@ -16,13 +16,14 @@ class Result {
     /**
      * 使用消息队列保存顺序号对应的日志
      * */
-    private Map<String, MessageQueue> seqNumQueueMap = new ConcurrentHashMap<>();
+//    private Map<String, MessageQueue> seqNumQueueMap = new ConcurrentHashMap<>();
 
     /**
      * 缓存全量日志.
      */
 //    private Map<String, List<TraceLog>> logs = new HashMap<>();
 
+//    private Map<String, TraceLogList> traceLogListMap = new HashMap<>();
 
     /**
      * 保存命中的 TraceId.
@@ -37,7 +38,7 @@ class Result {
         return this.targetTraceIds;
     }
 
-    public Map<String, MessageQueue> getSeqNumQueueMap() {
-        return seqNumQueueMap;
-    }
+//    public Map<String, MessageQueue> getSeqNumQueueMap() {
+//        return seqNumQueueMap;
+//    }
 }
