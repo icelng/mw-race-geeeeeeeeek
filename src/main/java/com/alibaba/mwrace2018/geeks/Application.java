@@ -11,12 +11,14 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import javax.annotation.Resource;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -25,8 +27,17 @@ import java.util.List;
 @SpringBootApplication
 public class Application implements CommandLineRunner {
 
+    private static final String MESSAGES_FILE_PATH = "./log";
+    private static final long FILE_SIZE_8G = 8 * 1024 * 1024 * 1024L;  //4G
+    private static final long FILE_SIZE = FILE_SIZE_8G;  //4G
+    private static final int REGION_SIZE = 512 * 1024 * 1024;  //4G
     private static final Logger LOGGER = LoggerFactory.getLogger(Application.class);
     private static final TraceLogComparator COMPARATOR = new TraceLogComparator();
+
+
+    private IdlePageManager idlePageManager;
+    private StoreIO storeIO;
+    private ResidentPageCachePool residentPageCachePool;
 
     /**
      * 获取数据的 URL 地址.
@@ -53,8 +64,14 @@ public class Application implements CommandLineRunner {
     private Result process() throws IOException {
         LOGGER.info("dataUrl = {}", this.dataUrl);
 
-        CharSource source = Resources.asCharSource(new URL(this.dataUrl), Charset.forName("UTF-8"));
-        TraceLogProcessor processor = new TraceLogProcessor();
+        storeIO = new StoreIO(MESSAGES_FILE_PATH, FILE_SIZE, REGION_SIZE);
+        idlePageManager = new SingleUseIdlePageManager(FILE_SIZE, 4096);
+        residentPageCachePool = new ResidentPageCachePool(65535, 4096);
+
+//        CharSource source = Resources.asCharSource(new URL(this.dataUrl), Charset.forName("UTF-8"));
+        URL url = Resources.getResource(this.dataUrl);
+        CharSource source = Resources.asCharSource(url, Charset.forName("UTF-8"));
+        TraceLogProcessor processor = new TraceLogProcessor(idlePageManager, storeIO, residentPageCachePool);
         return source.readLines(processor);
     }
 
@@ -62,10 +79,34 @@ public class Application implements CommandLineRunner {
         LOGGER.info("outputDir = {}", this.outputDir);
 
         for (String traceId : result.getTargetTraceIds()) {
+            String seqNum = traceId.substring(21, 24);
+            MessageQueue messageQueue = result.getSeqNumQueueMap().get(seqNum);
+            List<TraceLog> logs = new ArrayList<>();
+
+
+            long offset = 0;
+            while (true) {
+                List<byte[]> lines = messageQueue.get(offset, 10);
+
+                for (byte[] line : lines) {
+                    String strLine = new String(line);
+                    TraceLog traceLog = new TraceLog(strLine);
+                    if (traceLog.getTraceId().equals(traceId)) {
+                        logs.add(traceLog);
+                    }
+                }
+
+                if (lines.size() < 10) {
+                    /*说明取空了*/
+                    break;
+                }
+                offset += 10;
+            }
+
             String filePath = this.outputDir + "/" + traceId;
             LOGGER.info("filePath = {}", filePath);
             CharSink sink = Files.asCharSink(new File(filePath), Charset.forName("UTF-8"));
-            sink.writeLines(this.sort(result.getLogs().get(traceId)));
+            sink.writeLines(this.sort(logs));
         }
     }
 

@@ -2,6 +2,7 @@ package com.alibaba.mwrace2018.geeks;
 
 import com.google.common.io.LineProcessor;
 
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 
 /**
@@ -12,15 +13,32 @@ public class TraceLogProcessor implements LineProcessor<Result> {
     private static final int TIMEOUT_THRESHOLD = 200;
     private static final String RESULT_CODE_ERROR = "01";
 
+    private IdlePageManager idlePageManager;
+    private StoreIO storeIO;
+    private ResidentPageCachePool residentPageCachePool;
+
     private Result result = new Result();
 
+
+    public TraceLogProcessor(IdlePageManager idlePageManager, StoreIO storeIO, ResidentPageCachePool residentPageCachePool) {
+        super();
+        this.idlePageManager = idlePageManager;
+        this.storeIO = storeIO;
+        this.residentPageCachePool = residentPageCachePool;
+    }
+
     @Override
-    public boolean processLine(String s) {
+    public boolean processLine(String s) throws UnsupportedEncodingException {
         TraceLog traceLog = new TraceLog(s);
-        if (!this.result.getLogs().containsKey(traceLog.getTraceId())) {
-            this.result.getLogs().put(traceLog.getTraceId(), new ArrayList<TraceLog>());
+        String seqNum = s.substring(21, 24);
+
+        if (!this.result.getSeqNumQueueMap().containsKey(seqNum)) {
+            /*如果不存在顺序号对应的队列*/
+            this.result.getSeqNumQueueMap().put(seqNum, new AppendedIndexMessageQueue(idlePageManager, storeIO,residentPageCachePool));
         }
-        this.result.getLogs().get(traceLog.getTraceId()).add(traceLog);
+
+        MessageQueue seqNumMessageQueue = this.result.getSeqNumQueueMap().get(seqNum);
+        seqNumMessageQueue.put(s.getBytes("UTF-8"));
 
         if (this.select(traceLog)) {
             this.result.getTargetTraceIds().add(traceLog.getTraceId());
