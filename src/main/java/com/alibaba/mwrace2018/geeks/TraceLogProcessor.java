@@ -3,6 +3,7 @@ package com.alibaba.mwrace2018.geeks;
 import com.google.common.io.CharSink;
 import com.google.common.io.Files;
 import com.google.common.io.LineProcessor;
+import com.google.common.util.concurrent.RateLimiter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,6 +31,7 @@ public class TraceLogProcessor implements LineProcessor<Result> {
     private Object lock = new Object();
     private FlushService flushService;
     private ProcessService processService;
+    private RateLimiter limiter = RateLimiter.create(2000);
 
     private Map<String, TraceLogList> traceLogListMap = new ConcurrentHashMap<>();
 
@@ -54,6 +56,7 @@ public class TraceLogProcessor implements LineProcessor<Result> {
     }
 
     public void doProcess(String s) {
+        limiter.acquire();
         TraceLog traceLog = new TraceLog(s);
 //        String seqNum = s.substring(21, 24);
 
