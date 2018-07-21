@@ -77,6 +77,7 @@ public class Application implements CommandLineRunner {
         LOGGER.info("outputDir = {}", this.outputDir);
 
         for (int i = 0;i < 65535;i++) {
+            LOGGER.info("seqNum:{}", i);
             String seqNum = String.valueOf(i);
             MessageQueue messageQueue = result.getSeqNumQueueMap().get(seqNum);
 
