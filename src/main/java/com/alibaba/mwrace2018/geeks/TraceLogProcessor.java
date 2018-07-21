@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author 奥陌
@@ -28,7 +29,7 @@ public class TraceLogProcessor implements LineProcessor<Result> {
     private StoreIO storeIO;
     private ResidentPageCachePool residentPageCachePool;
 
-    private Map<String, TraceLogList> traceLogListMap = new HashMap<>();
+    private Map<String, TraceLogList> traceLogListMap = new ConcurrentHashMap<>();
 
     private int curTerm = 0;
     private int termDays = 0;
