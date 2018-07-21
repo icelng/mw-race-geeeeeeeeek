@@ -77,7 +77,7 @@ public class TraceLogByteProcessor implements ByteProcessor<Result> {
                     case 3:
                         /*入口的耗时*/
                         if (rpcType == RPC_TYPE_ENTRY) {
-                            strTemp = new String(logBytesLine, fieldStartIndex, byteIndex - fieldStartIndex);
+                            strTemp = new String(logBytesLine, fieldStartIndex, byteIndex - fieldStartIndex - 1);
                             this.rt = Integer.parseInt(strTemp);
 //                            logger.info("type:0, rt:{}", this.rt);
 
@@ -93,7 +93,7 @@ public class TraceLogByteProcessor implements ByteProcessor<Result> {
                     case 6:
                         /*0(入口类型)的用户数据*/
                         if (rpcType == RPC_TYPE_ENTRY) {
-                            strTemp = new String(logBytesLine, fieldStartIndex, byteIndex - fieldStartIndex);
+                            strTemp = new String(logBytesLine, fieldStartIndex, byteIndex - fieldStartIndex - 1);
                             this.userData = strTemp;
                         } else if (rpcType == RPC_TYPE_SERVER) {
                             /*执行结果*/
@@ -104,7 +104,7 @@ public class TraceLogByteProcessor implements ByteProcessor<Result> {
                     case 7:
                         /*client 的耗时*/
                         if (rpcType == RPC_TYPE_CLIENT) {
-                            strTemp = new String(logBytesLine, fieldStartIndex, byteIndex - fieldStartIndex);
+                            strTemp = new String(logBytesLine, fieldStartIndex, byteIndex - fieldStartIndex - 1);
                             this.rt = Integer.parseInt(strTemp.substring(
                                     strTemp.indexOf(',') + 1, strTemp.indexOf(']')).trim());
 //                            logger.info("type:1, rt:{}", this.rt);
@@ -113,7 +113,7 @@ public class TraceLogByteProcessor implements ByteProcessor<Result> {
                     case 8:
                         if (rpcType == RPC_TYPE_SERVER) {
                             /*server 耗时*/
-                            strTemp = new String(logBytesLine, fieldStartIndex, byteIndex - fieldStartIndex);
+                            strTemp = new String(logBytesLine, fieldStartIndex, byteIndex - fieldStartIndex - 1);
                             this.rt = Integer.parseInt(strTemp);
 //                            logger.info("type:2, rt:{}", this.rt);
                         } else if (rpcType == RPC_TYPE_CLIENT) {
