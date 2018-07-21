@@ -25,6 +25,8 @@ public class TraceLogProcessor implements LineProcessor<Result> {
     private static final int TERM_LEN = 512;
     private static final TraceLogComparator COMPARATOR = new TraceLogComparator();
 
+    private FlushService flushService;
+
     private Map<String, TraceLogList> traceLogListMap = new ConcurrentHashMap<>();
 
     private int curTerm = 0;
@@ -37,6 +39,7 @@ public class TraceLogProcessor implements LineProcessor<Result> {
     public TraceLogProcessor(String outputDir) {
         super();
         this.outputDir = outputDir;
+        flushService = new FlushService(outputDir);
     }
 
     @Override
@@ -65,13 +68,14 @@ public class TraceLogProcessor implements LineProcessor<Result> {
 
                 if (traceLogList.getTerm() != curTerm) {
                     /*当前任期无活动，则判决传输完毕*/
+                    traceLogListMap.remove(traceId);
                     if (traceLogList.isTarget()) {
                         /*是输出目标*/
-                        String filePath = this.outputDir + "/" + traceId;
-                        CharSink sink = Files.asCharSink(new File(filePath), Charset.forName("UTF-8"));
-                        sink.writeLines(this.sort(traceLogList.getTraceLogs()));
+//                        String filePath = this.outputDir + "/" + traceId;
+//                        CharSink sink = Files.asCharSink(new File(filePath), Charset.forName("UTF-8"));
+//                        sink.writeLines(this.sort(traceLogList.getTraceLogs()));
+                        flushService.requestFlush(traceLogList);
                     }
-                    traceLogListMap.remove(traceId);
                 }
 
             }
