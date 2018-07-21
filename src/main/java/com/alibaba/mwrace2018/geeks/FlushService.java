@@ -57,7 +57,6 @@ public class FlushService {
         for (int i = 0;i < THREAD_NUM;i++) {
             thread[i].interrupt();
         }
-//        requestNum.notify();
     }
 
     public void requestFlush(TraceLogList traceLogList) {

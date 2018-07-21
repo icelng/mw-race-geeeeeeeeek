@@ -13,6 +13,8 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author 奥陌
@@ -26,11 +28,12 @@ public class TraceLogProcessor implements LineProcessor<Result> {
     private static final TraceLogComparator COMPARATOR = new TraceLogComparator();
 
     private FlushService flushService;
+    private ProcessService processService;
 
     private Map<String, TraceLogList> traceLogListMap = new ConcurrentHashMap<>();
 
-    private int curTerm = 0;
-    private int termDays = 0;
+    private AtomicInteger curTerm = new AtomicInteger(0);
+    private AtomicInteger termDays = new AtomicInteger(0);
 
     private Result result = new Result();
 
@@ -40,10 +43,16 @@ public class TraceLogProcessor implements LineProcessor<Result> {
         super();
         this.outputDir = outputDir;
         flushService = new FlushService(outputDir);
+        processService = new ProcessService(this);
     }
 
     @Override
     public boolean processLine(String s) throws IOException {
+        processService.requestProcess(s);
+        return true;
+    }
+
+    public void doProcess(String s) {
         TraceLog traceLog = new TraceLog(s);
 //        String seqNum = s.substring(21, 24);
 
@@ -54,19 +63,19 @@ public class TraceLogProcessor implements LineProcessor<Result> {
 
         TraceLogList traceLogList = traceLogListMap.get(traceLog.getTraceId());
         traceLogList.getTraceLogs().add(traceLog);
-        traceLogList.setTerm(curTerm);
+        traceLogList.setTerm(curTerm.get());
 
         if (this.select(traceLog)) {
             traceLogList.setTarget(true);
         }
 
-        if (termDays++ >= TERM_LEN) {
+        if (termDays.getAndAdd(1) >= TERM_LEN) {
             /*满一任期*/
             Set<String> traceIds = traceLogListMap.keySet();
             for (String traceId : traceIds) {
                 traceLogList = traceLogListMap.get(traceId);
 
-                if (traceLogList.getTerm() != curTerm) {
+                if (traceLogList.getTerm() != curTerm.get()) {
                     /*当前任期无活动，则判决传输完毕*/
                     traceLogListMap.remove(traceId);
                     if (traceLogList.isTarget()) {
@@ -80,16 +89,15 @@ public class TraceLogProcessor implements LineProcessor<Result> {
 
             }
 
-            termDays = 0;
-            curTerm++;
+            termDays.set(0);
+            curTerm.getAndAdd(1);
         }
-
-        return true;
     }
 
     @Override
     public Result getResult() {
         flushService.stop();
+        processService.stop();
         return this.result;
     }
 

@@ -156,6 +156,7 @@ public class TraceLogByteProcessor implements ByteProcessor<Result> {
         return true;
     }
 
+
     @Override
     public Result getResult() {
         return this.result;
