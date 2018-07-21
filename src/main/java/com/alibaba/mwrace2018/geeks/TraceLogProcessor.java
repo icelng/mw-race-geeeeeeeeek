@@ -46,11 +46,11 @@ public class TraceLogProcessor implements LineProcessor<Result> {
 
         if (!traceLogListMap.containsKey(traceLog.getTraceId())) {
             TraceLogList traceLogList = new TraceLogList();
-            traceLogList.getTraceLogs().add(traceLog);
             traceLogListMap.put(traceLog.getTraceId(), traceLogList);
         }
 
         TraceLogList traceLogList = traceLogListMap.get(traceLog.getTraceId());
+        traceLogList.getTraceLogs().add(traceLog);
         traceLogList.setTerm(curTerm);
 
         if (this.select(traceLog)) {
@@ -60,9 +60,6 @@ public class TraceLogProcessor implements LineProcessor<Result> {
         if (termDays++ >= TERM_LEN) {
             /*满一任期*/
             Set<String> traceIds = traceLogListMap.keySet();
-            if (traceIds == null) {
-                logger.info("Ids is empty????????????????????");
-            }
             for (String traceId : traceIds) {
                 traceLogList = traceLogListMap.get(traceId);
 
