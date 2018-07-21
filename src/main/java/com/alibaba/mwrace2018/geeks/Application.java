@@ -1,9 +1,6 @@
 package com.alibaba.mwrace2018.geeks;
 
-import com.google.common.io.CharSink;
-import com.google.common.io.Files;
-import com.google.common.io.Resources;
-import com.google.common.io.CharSource;
+import com.google.common.io.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -62,14 +59,17 @@ public class Application implements CommandLineRunner {
         LOGGER.info("dataUrl = {}", this.dataUrl);
 
         storeIO = new StoreIO(outputDir + "/log", FILE_SIZE, REGION_SIZE);
-        idlePageManager = new SingleUseIdlePageManager(FILE_SIZE, 512);
-        residentPageCachePool = new ResidentPageCachePool(65535, 512);
+        idlePageManager = new SingleUseIdlePageManager(FILE_SIZE, 1024);
+        residentPageCachePool = new ResidentPageCachePool(65535, 1024);
 
-        CharSource source = Resources.asCharSource(new URL(this.dataUrl), Charset.forName("UTF-8"));
+        ByteSource byteSource = Resources.asByteSource(new URL(this.dataUrl));
+//        CharSource source = Resources.asCharSource(new URL(this.dataUrl), Charset.forName("UTF-8"));
 //        URL url = Resources.getResource(this.dataUrl);
 //        CharSource source = Resources.asCharSource(url, Charset.forName("UTF-8"));
-        TraceLogProcessor processor = new TraceLogProcessor(idlePageManager, storeIO, residentPageCachePool);
-        return source.readLines(processor);
+//        TraceLogProcessor processor = new TraceLogProcessor(idlePageManager, storeIO, residentPageCachePool);
+        TraceLogByteProcessor processor = new TraceLogByteProcessor(idlePageManager, storeIO, residentPageCachePool);
+//        return source.readLines(processor);
+        return byteSource.read(processor);
     }
 
     private void output(Result result) throws IOException {

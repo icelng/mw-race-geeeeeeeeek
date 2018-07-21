@@ -38,7 +38,7 @@ public class TraceLogProcessor implements LineProcessor<Result> {
         }
 
         MessageQueue seqNumMessageQueue = this.result.getSeqNumQueueMap().get(seqNum);
-        seqNumMessageQueue.put(s.getBytes("UTF-8"));
+        seqNumMessageQueue.put(s.getBytes("UTF-8"), s.length());
 
         if (this.select(traceLog)) {
             this.result.getTargetTraceIds().add(traceLog.getTraceId());

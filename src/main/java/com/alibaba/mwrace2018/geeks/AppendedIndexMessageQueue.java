@@ -68,7 +68,7 @@ public class AppendedIndexMessageQueue extends MessageQueue{
      * @param message
      */
     @Override
-    public void put(byte[] message) {
+    public void put(byte[] message, int len) {
 
         if (residentPageCache == null) {
             residentPageCache = residentPageCachePool.borrowPage();
@@ -85,11 +85,11 @@ public class AppendedIndexMessageQueue extends MessageQueue{
         }
 
         /*如果数据写满一页*/
-        if (((wrotePosition + message.length + MESSAGE_HEAD_SIZE) & (~pageMask)) != (wrotePosition & (~pageMask))) {
+        if (((wrotePosition + len + MESSAGE_HEAD_SIZE) & (~pageMask)) != (wrotePosition & (~pageMask))) {
             /*需要在新页上写*/
             /*先把常驻页内容写入pageCache*/
             if (wrotePosition == 0) {
-                logger.error(String.format("Error! wrote position: %d, message size: %d", wrotePosition, message.length));
+                logger.error(String.format("Error! wrote position: %d, message size: %d", wrotePosition, len));
             }
             commit();
             lastPageIndex++;
@@ -103,10 +103,10 @@ public class AppendedIndexMessageQueue extends MessageQueue{
 
 
         /*写入数据*/
-        shortToBytes((short) message.length, head, 0);
+        shortToBytes((short) len, head, 0);
         residentPageCache.put(head);
-        residentPageCache.put(message);
-        wrotePosition += (MESSAGE_HEAD_SIZE + message.length);
+        residentPageCache.put(message, 0, len);
+        wrotePosition += (MESSAGE_HEAD_SIZE + len);
         pageTable[lastPageIndex * 2 + 1] = ++queueLength;
 
     }
