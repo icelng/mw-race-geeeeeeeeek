@@ -77,7 +77,7 @@ public class TraceLogProcessor implements LineProcessor<Result> {
                     traceLogListMap.remove(traceId);
                 }
 
-            }
+        }
 
             termDays = 0;
             curTerm++;
