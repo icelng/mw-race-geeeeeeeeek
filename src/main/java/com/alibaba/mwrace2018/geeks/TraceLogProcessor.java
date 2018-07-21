@@ -3,6 +3,8 @@ package com.alibaba.mwrace2018.geeks;
 import com.google.common.io.CharSink;
 import com.google.common.io.Files;
 import com.google.common.io.LineProcessor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.io.File;
@@ -15,6 +17,7 @@ import java.util.*;
  * @author 奥陌
  */
 public class TraceLogProcessor implements LineProcessor<Result> {
+    private static final Logger logger = LoggerFactory.getLogger(TraceLogByteProcessor.class);
 
     private static final int TIMEOUT_THRESHOLD = 200;
     private static final String RESULT_CODE_ERROR = "01";
@@ -63,7 +66,11 @@ public class TraceLogProcessor implements LineProcessor<Result> {
 
         if (termDays++ >= TERM_LEN) {
             /*满一任期*/
-            for (String traceId : traceLogListMap.keySet()) {
+            Set<String> traceIds = traceLogListMap.keySet();
+            if (traceIds == null) {
+                logger.info("Ids is empty????????????????????");
+            }
+            for (String traceId : traceIds) {
                 traceLogList = traceLogListMap.get(traceId);
 
                 if (traceLogList.getTerm() != curTerm) {
@@ -77,7 +84,7 @@ public class TraceLogProcessor implements LineProcessor<Result> {
                     traceLogListMap.remove(traceId);
                 }
 
-        }
+            }
 
             termDays = 0;
             curTerm++;
