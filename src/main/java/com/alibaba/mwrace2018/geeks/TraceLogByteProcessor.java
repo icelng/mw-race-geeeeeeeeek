@@ -117,7 +117,6 @@ public class TraceLogByteProcessor implements ByteProcessor<Result> {
                         break;
 
                 }
-                fieldIndex++;
                 fieldStartIndex = byteIndex;
                 userData = null;
             }else if (c == '\n') {
