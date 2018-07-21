@@ -27,6 +27,7 @@ public class TraceLogProcessor implements LineProcessor<Result> {
     private static final int TERM_LEN = 512;
     private static final TraceLogComparator COMPARATOR = new TraceLogComparator();
 
+    private Object lock = new Object();
     private FlushService flushService;
     private ProcessService processService;
 
@@ -69,28 +70,30 @@ public class TraceLogProcessor implements LineProcessor<Result> {
             traceLogList.setTarget(true);
         }
 
-        if (termDays.getAndAdd(1) >= TERM_LEN) {
-            /*满一任期*/
-            Set<String> traceIds = traceLogListMap.keySet();
-            for (String traceId : traceIds) {
-                traceLogList = traceLogListMap.get(traceId);
+        synchronized (lock) {
+            if (termDays.getAndAdd(1) >= TERM_LEN) {
+                /*满一任期*/
+                Set<String> traceIds = traceLogListMap.keySet();
+                for (String traceId : traceIds) {
+                    traceLogList = traceLogListMap.get(traceId);
 
-                if (traceLogList.getTerm() != curTerm.get()) {
-                    /*当前任期无活动，则判决传输完毕*/
-                    traceLogListMap.remove(traceId);
-                    if (traceLogList.isTarget()) {
-                        /*是输出目标*/
+                    if (traceLogList.getTerm() != curTerm.get()) {
+                        /*当前任期无活动，则判决传输完毕*/
+                        traceLogListMap.remove(traceId);
+                        if (traceLogList.isTarget()) {
+                            /*是输出目标*/
 //                        String filePath = this.outputDir + "/" + traceId;
 //                        CharSink sink = Files.asCharSink(new File(filePath), Charset.forName("UTF-8"));
 //                        sink.writeLines(this.sort(traceLogList.getTraceLogs()));
-                        flushService.requestFlush(traceLogList);
+                            flushService.requestFlush(traceLogList);
+                        }
                     }
+
                 }
 
+                termDays.set(0);
+                curTerm.getAndAdd(1);
             }
-
-            termDays.set(0);
-            curTerm.getAndAdd(1);
         }
     }
 
