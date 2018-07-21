@@ -31,7 +31,6 @@ public class TraceLogProcessor implements LineProcessor<Result> {
     private Object lock = new Object();
     private FlushService flushService;
     private ProcessService processService;
-    private RateLimiter limiter = RateLimiter.create(2000);
 
     private Map<String, TraceLogList> traceLogListMap = new ConcurrentHashMap<>();
 
@@ -56,7 +55,6 @@ public class TraceLogProcessor implements LineProcessor<Result> {
     }
 
     public void doProcess(String s) {
-        limiter.acquire();
         TraceLog traceLog = new TraceLog(s);
 //        String seqNum = s.substring(21, 24);
 

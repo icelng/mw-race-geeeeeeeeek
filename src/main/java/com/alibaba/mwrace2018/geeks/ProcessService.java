@@ -5,7 +5,7 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Semaphore;
 
 public class ProcessService {
-    private static final int THREAD_NUM = 10;
+    private static final int THREAD_NUM = 2;
     private Thread thread[] = new Thread[THREAD_NUM];
     private Semaphore requestNum = new Semaphore(0);
     private Deque<String> requestQueue = new ConcurrentLinkedDeque<>();
