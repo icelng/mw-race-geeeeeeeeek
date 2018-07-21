@@ -15,7 +15,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class FlushService {
-    private static final int THREAD_NUM = 128;
+    private static final int THREAD_NUM = 16;
     private static final TraceLogComparator COMPARATOR = new TraceLogComparator();
     private Semaphore requestNum = new Semaphore(0);
     private Deque<TraceLogList> requestQueue = new ConcurrentLinkedDeque<>();
