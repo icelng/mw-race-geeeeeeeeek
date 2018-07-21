@@ -27,7 +27,11 @@ public class FlushService {
         thread = new Thread(() -> {
 
             while (!stopFlag.get()) {
-                requestNum.acquireUninterruptibly();
+                try {
+                    requestNum.acquire();
+                } catch (InterruptedException e) {
+                    break;
+                }
                 TraceLogList traceLogList = requestQueue.pollFirst();
                 String filePath = this.outputDir + "/" + traceLogList.getTraceLogs().get(0).getTraceId();
                 CharSink sink = Files.asCharSink(new File(filePath), Charset.forName("UTF-8"));
