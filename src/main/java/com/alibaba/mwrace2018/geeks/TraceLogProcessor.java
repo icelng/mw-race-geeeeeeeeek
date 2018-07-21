@@ -25,7 +25,7 @@ public class TraceLogProcessor implements LineProcessor<Result> {
 
     private static final int TIMEOUT_THRESHOLD = 200;
     private static final String RESULT_CODE_ERROR = "01";
-    private static final int TERM_LEN = 256;
+    private static final int TERM_LEN = 128;
     private static final TraceLogComparator COMPARATOR = new TraceLogComparator();
 
     private Object lock = new Object();
