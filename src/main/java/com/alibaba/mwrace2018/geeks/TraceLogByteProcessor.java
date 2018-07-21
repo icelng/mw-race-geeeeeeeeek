@@ -127,7 +127,8 @@ public class TraceLogByteProcessor implements ByteProcessor<Result> {
 
                 if (!this.result.getSeqNumQueueMap().containsKey(seqNum)) {
                     /*如果不存在顺序号对应的队列*/
-                    this.result.getSeqNumQueueMap().put(seqNum, new AppendedIndexMessageQueue(idlePageManager, storeIO,residentPageCachePool));
+//                    this.result.getSeqNumQueueMap().put(seqNum, new AppendedIndexMessageQueue(idlePageManager, storeIO,residentPageCachePool));
+                    this.result.getSeqNumQueueMap().put(seqNum, new IsolatedIndexMessageQueue(idlePageManager, storeIO));
                 }
 
                 MessageQueue seqNumMessageQueue = this.result.getSeqNumQueueMap().get(seqNum);
