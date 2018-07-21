@@ -53,6 +53,9 @@ public class Application implements CommandLineRunner {
     @Override
     public void run(String... strings) throws Exception {
         Result result = this.process();
+        if (result.getTargetTraceIds().size() == 0) {
+            LOGGER.info("Error!!!the target is empty!!!!!!!!");
+        }
         this.output(result);
     }
 
