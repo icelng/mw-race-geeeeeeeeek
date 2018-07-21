@@ -1,10 +1,15 @@
 package com.alibaba.mwrace2018.geeks;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.List;
 
 public class AppendedIndexMessageQueue extends MessageQueue{
+    private static Logger logger = LoggerFactory.getLogger(AppendedIndexMessageQueue.class);
+
     private static final int MESSAGE_HEAD_SIZE = 2;
     private static final int INITIAL_PAGE_TABLE_LEN = 32;
     private static final int EXPEND_PAGE_TABLE_LEN = 8;
@@ -68,6 +73,7 @@ public class AppendedIndexMessageQueue extends MessageQueue{
         if (residentPageCache == null) {
             residentPageCache = residentPageCachePool.borrowPage();
             if (residentPageCache == null) {
+                logger.error("Failed to borrow resident page cache!");
                 throw new OutOfMemoryError("Failed to borrow resident page cache!");
             }
         }
@@ -83,7 +89,7 @@ public class AppendedIndexMessageQueue extends MessageQueue{
             /*需要在新页上写*/
             /*先把常驻页内容写入pageCache*/
             if (wrotePosition == 0) {
-                System.out.println(String.format("Error! wrote position: %d, message size: %d", wrotePosition, message.length));
+                logger.error(String.format("Error! wrote position: %d, message size: %d", wrotePosition, message.length));
             }
             commit();
             lastPageIndex++;
@@ -221,6 +227,8 @@ public class AppendedIndexMessageQueue extends MessageQueue{
             /*如果没有使用常驻内存页，或者常驻内存页不是作为写缓存，则不用提交*/
             return;
         }
+
+        logger.info("commit!!!!");
 
         if (isWritePageCache) {
             isWritePageCache = false;
