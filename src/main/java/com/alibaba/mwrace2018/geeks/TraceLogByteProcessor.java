@@ -1,6 +1,8 @@
 package com.alibaba.mwrace2018.geeks;
 
 import com.google.common.io.ByteProcessor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
@@ -13,6 +15,7 @@ import java.io.IOException;
 //		例：c0a8050115304435433133591d9b13|1530443543320|2|0.1.1|service.25.1.2|methodName2512|00|10.0.0.251|85|0|@a=1&s=8b3dd3fc&@ps=2898038f&
 
 public class TraceLogByteProcessor implements ByteProcessor<Result> {
+    private static Logger logger = LoggerFactory.getLogger(TraceLogByteProcessor.class);
     private static final int TIMEOUT_THRESHOLD = 200;
 //    private static final byte[] RESULT_CODE_ERROR = "01";
 
@@ -69,13 +72,15 @@ public class TraceLogByteProcessor implements ByteProcessor<Result> {
                 switch (fieldIndex++) {
                     case 2:
                         /*类型*/
-                        rpcType = logBytesLine[byteIndex - 1];
+                        rpcType = logBytesLine[fieldStartIndex];
                         break;
                     case 3:
                         /*入口的耗时*/
                         if (rpcType == RPC_TYPE_ENTRY) {
                             strTemp = new String(logBytesLine, fieldStartIndex, byteIndex - fieldStartIndex);
                             this.rt = Integer.parseInt(strTemp);
+                            logger.info("type:0, rt:{}", this.rt);
+
                         }
                         break;
                     case 4:
@@ -102,6 +107,7 @@ public class TraceLogByteProcessor implements ByteProcessor<Result> {
                             strTemp = new String(logBytesLine, fieldStartIndex, byteIndex - fieldStartIndex);
                             this.rt = Integer.parseInt(strTemp.substring(
                                     strTemp.indexOf(',') + 1, strTemp.indexOf(']')).trim());
+                            logger.info("type:1, rt:{}", this.rt);
                         }
                         break;
                     case 8:
@@ -109,6 +115,7 @@ public class TraceLogByteProcessor implements ByteProcessor<Result> {
                             /*server 耗时*/
                             strTemp = new String(logBytesLine, fieldStartIndex, byteIndex - fieldStartIndex);
                             this.rt = Integer.parseInt(strTemp);
+                            logger.info("type:2, rt:{}", this.rt);
                         } else if (rpcType == RPC_TYPE_CLIENT) {
                             /*执行结果*/
                             resultCode[0] = logBytesLine[fieldStartIndex];
@@ -118,7 +125,6 @@ public class TraceLogByteProcessor implements ByteProcessor<Result> {
 
                 }
                 fieldStartIndex = byteIndex;
-                userData = null;
             }else if (c == '\n') {
                 /*一行解析完毕*/
                 String seqNum = new String(logBytesLine, 21, 4);
