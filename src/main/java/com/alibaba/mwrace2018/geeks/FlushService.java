@@ -49,6 +49,8 @@ public class FlushService {
 
     public void stop(){
         stopFlag.set(true);
+        thread.interrupt();
+//        requestNum.notify();
     }
 
     public void requestFlush(TraceLogList traceLogList) {
