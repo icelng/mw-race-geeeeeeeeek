@@ -61,7 +61,7 @@ public class Application implements CommandLineRunner {
     private Result process() throws IOException {
         LOGGER.info("dataUrl = {}", this.dataUrl);
 
-        storeIO = new StoreIO(MESSAGES_FILE_PATH, FILE_SIZE, REGION_SIZE);
+        storeIO = new StoreIO(outputDir + "/log", FILE_SIZE, REGION_SIZE);
         idlePageManager = new SingleUseIdlePageManager(FILE_SIZE, 4096);
         residentPageCachePool = new ResidentPageCachePool(65535, 4096);
 
