@@ -31,7 +31,7 @@ public class Application implements CommandLineRunner {
 
     private IdlePageManager idlePageManager;
     private StoreIO storeIO;
-    private ResidentPageCachePool residentPageCachePool;
+    private ResidentPageCachePool residentPageCachePool = null;
 
     /**
      * 获取数据的 URL 地址.
@@ -59,8 +59,8 @@ public class Application implements CommandLineRunner {
         LOGGER.info("dataUrl = {}", this.dataUrl);
 
         storeIO = new StoreIO(outputDir + "/log", FILE_SIZE, REGION_SIZE);
-        idlePageManager = new SingleUseIdlePageManager(FILE_SIZE, 512);
-        residentPageCachePool = new ResidentPageCachePool(65535, 512);
+        idlePageManager = new SingleUseIdlePageManager(FILE_SIZE, 4096);
+//        residentPageCachePool = new ResidentPageCachePool(65535, 4096);
 
         ByteSource byteSource = Resources.asByteSource(new URL(this.dataUrl));
 //        CharSource source = Resources.asCharSource(new URL(this.dataUrl), Charset.forName("UTF-8"));
