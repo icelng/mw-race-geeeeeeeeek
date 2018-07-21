@@ -12,18 +12,21 @@ import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class FlushService {
     private static final TraceLogComparator COMPARATOR = new TraceLogComparator();
     private Semaphore requestNum = new Semaphore(0);
     private Deque<TraceLogList> requestQueue = new ConcurrentLinkedDeque<>();
     private String outputDir;
+    private Thread thread;
+    private AtomicBoolean stopFlag = new AtomicBoolean(false);
 
     public FlushService(String outputDir) {
         this.outputDir = outputDir;
-        new Thread(() -> {
+        thread = new Thread(() -> {
 
-            while (true) {
+            while (!stopFlag.get()) {
                 requestNum.acquireUninterruptibly();
                 TraceLogList traceLogList = requestQueue.pollFirst();
                 String filePath = this.outputDir + "/" + traceLogList.getTraceLogs().get(0).getTraceId();
@@ -36,7 +39,12 @@ public class FlushService {
 
             }
 
-        }).start();
+        });
+        thread.start();
+    }
+
+    public void stop(){
+        stopFlag.set(true);
     }
 
     public void requestFlush(TraceLogList traceLogList) {

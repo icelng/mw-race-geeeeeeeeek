@@ -89,6 +89,7 @@ public class TraceLogProcessor implements LineProcessor<Result> {
 
     @Override
     public Result getResult() {
+        flushService.stop();
         return this.result;
     }
 
