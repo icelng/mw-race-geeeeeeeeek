@@ -22,15 +22,15 @@ public class TraceLogByteProcessor implements ByteProcessor<Result> {
     /**
      * 入口类型.
      */
-    private final static int RPC_TYPE_ENTRY = 0;
+    private final static int RPC_TYPE_ENTRY = '0';
     /**
      * 客户端类型.
      */
-    private final static int RPC_TYPE_CLIENT = 1;
+    private final static int RPC_TYPE_CLIENT = '1';
     /**
      * 服务端类型.
      */
-    private final static int RPC_TYPE_SERVER = 2;
+    private final static int RPC_TYPE_SERVER = '2';
 
 
     private Result result = new Result();
@@ -79,7 +79,7 @@ public class TraceLogByteProcessor implements ByteProcessor<Result> {
                         if (rpcType == RPC_TYPE_ENTRY) {
                             strTemp = new String(logBytesLine, fieldStartIndex, byteIndex - fieldStartIndex);
                             this.rt = Integer.parseInt(strTemp);
-                            logger.info("type:0, rt:{}", this.rt);
+//                            logger.info("type:0, rt:{}", this.rt);
 
                         }
                         break;
@@ -107,7 +107,7 @@ public class TraceLogByteProcessor implements ByteProcessor<Result> {
                             strTemp = new String(logBytesLine, fieldStartIndex, byteIndex - fieldStartIndex);
                             this.rt = Integer.parseInt(strTemp.substring(
                                     strTemp.indexOf(',') + 1, strTemp.indexOf(']')).trim());
-                            logger.info("type:1, rt:{}", this.rt);
+//                            logger.info("type:1, rt:{}", this.rt);
                         }
                         break;
                     case 8:
@@ -115,7 +115,7 @@ public class TraceLogByteProcessor implements ByteProcessor<Result> {
                             /*server 耗时*/
                             strTemp = new String(logBytesLine, fieldStartIndex, byteIndex - fieldStartIndex);
                             this.rt = Integer.parseInt(strTemp);
-                            logger.info("type:2, rt:{}", this.rt);
+//                            logger.info("type:2, rt:{}", this.rt);
                         } else if (rpcType == RPC_TYPE_CLIENT) {
                             /*执行结果*/
                             resultCode[0] = logBytesLine[fieldStartIndex];
