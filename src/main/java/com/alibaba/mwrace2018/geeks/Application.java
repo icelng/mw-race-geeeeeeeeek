@@ -62,8 +62,8 @@ public class Application implements CommandLineRunner {
         LOGGER.info("dataUrl = {}", this.dataUrl);
 
         storeIO = new StoreIO(outputDir + "/log", FILE_SIZE, REGION_SIZE);
-        idlePageManager = new SingleUseIdlePageManager(FILE_SIZE, 2048);
-        residentPageCachePool = new ResidentPageCachePool(65535, 2048);
+        idlePageManager = new SingleUseIdlePageManager(FILE_SIZE, 1024);
+        residentPageCachePool = new ResidentPageCachePool(65535, 1024);
 
         CharSource source = Resources.asCharSource(new URL(this.dataUrl), Charset.forName("UTF-8"));
 //        URL url = Resources.getResource(this.dataUrl);
