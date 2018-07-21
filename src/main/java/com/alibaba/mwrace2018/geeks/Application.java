@@ -70,7 +70,7 @@ public class Application implements CommandLineRunner {
         CharSource source = Resources.asCharSource(new URL(this.dataUrl), Charset.forName("UTF-8"));
 //        URL url = Resources.getResource(this.dataUrl);
 //        CharSource source = Resources.asCharSource(url, Charset.forName("UTF-8"));
-        TraceLogProcessor processor = new TraceLogProcessor(idlePageManager, storeIO, residentPageCachePool);
+        TraceLogProcessor processor = new TraceLogProcessor(outputDir);
 //        TraceLogByteProcessor processor = new TraceLogByteProcessor(idlePageManager, storeIO, residentPageCachePool);
         return source.readLines(processor);
 //        return byteSource.read(processor);

@@ -25,10 +25,6 @@ public class TraceLogProcessor implements LineProcessor<Result> {
     private static final int TERM_LEN = 512;
     private static final TraceLogComparator COMPARATOR = new TraceLogComparator();
 
-    private IdlePageManager idlePageManager;
-    private StoreIO storeIO;
-    private ResidentPageCachePool residentPageCachePool;
-
     private Map<String, TraceLogList> traceLogListMap = new ConcurrentHashMap<>();
 
     private int curTerm = 0;
@@ -36,15 +32,11 @@ public class TraceLogProcessor implements LineProcessor<Result> {
 
     private Result result = new Result();
 
-    @Value("${output.dir}")
     private String outputDir;
 
-
-    public TraceLogProcessor(IdlePageManager idlePageManager, StoreIO storeIO, ResidentPageCachePool residentPageCachePool) {
+    public TraceLogProcessor(String outputDir) {
         super();
-        this.idlePageManager = idlePageManager;
-        this.storeIO = storeIO;
-        this.residentPageCachePool = residentPageCachePool;
+        this.outputDir = outputDir;
     }
 
     @Override
