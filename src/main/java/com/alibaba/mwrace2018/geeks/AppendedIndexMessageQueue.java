@@ -228,7 +228,7 @@ public class AppendedIndexMessageQueue extends MessageQueue{
             return;
         }
 
-        logger.info("commit!!!!");
+//        logger.info("commit!!!!");
 
         if (isWritePageCache) {
             isWritePageCache = false;
