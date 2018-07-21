@@ -122,8 +122,7 @@ public class TraceLogByteProcessor implements ByteProcessor<Result> {
                 userData = null;
             }else if (c == '\n') {
                 /*一行解析完毕*/
-                String traceId = new String(logBytesLine, 0, 30);
-                String seqNum = traceId.substring(21, 24);
+                String seqNum = new String(logBytesLine, 21, 4);
 
                 if (!this.result.getSeqNumQueueMap().containsKey(seqNum)) {
                     /*如果不存在顺序号对应的队列*/
@@ -136,6 +135,7 @@ public class TraceLogByteProcessor implements ByteProcessor<Result> {
 
                 /*选择traceId*/
                 if (this.select()) {
+                    String traceId = new String(logBytesLine, 0, 30);
                     this.result.getTargetTraceIds().add(traceId);
                 }
 
