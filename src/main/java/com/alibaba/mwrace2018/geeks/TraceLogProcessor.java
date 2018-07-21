@@ -57,20 +57,20 @@ public class TraceLogProcessor implements LineProcessor<Result> {
         TraceLog traceLog = new TraceLog(s);
 //        String seqNum = s.substring(21, 24);
 
-        if (!traceLogListMap.containsKey(traceLog.getTraceId())) {
-            TraceLogList traceLogList = new TraceLogList();
-            traceLogListMap.put(traceLog.getTraceId(), traceLogList);
-        }
-
-        TraceLogList traceLogList = traceLogListMap.get(traceLog.getTraceId());
-        traceLogList.getTraceLogs().add(traceLog);
-        traceLogList.setTerm(curTerm.get());
-
-        if (this.select(traceLog)) {
-            traceLogList.setTarget(true);
-        }
-
         synchronized (lock) {
+            if (!traceLogListMap.containsKey(traceLog.getTraceId())) {
+                TraceLogList traceLogList = new TraceLogList();
+                traceLogListMap.put(traceLog.getTraceId(), traceLogList);
+            }
+
+            TraceLogList traceLogList = traceLogListMap.get(traceLog.getTraceId());
+            traceLogList.getTraceLogs().add(traceLog);
+            traceLogList.setTerm(curTerm.get());
+
+            if (this.select(traceLog)) {
+                traceLogList.setTarget(true);
+            }
+
             if (termDays.getAndAdd(1) >= TERM_LEN) {
                 /*满一任期*/
                 Set<String> traceIds = traceLogListMap.keySet();
