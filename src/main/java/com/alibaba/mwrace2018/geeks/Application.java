@@ -23,7 +23,8 @@ public class Application implements CommandLineRunner {
 
     private static final String MESSAGES_FILE_PATH = "./log";
     private static final long FILE_SIZE_8G = 8 * 1024 * 1024 * 1024L;  //4G
-    private static final long FILE_SIZE = FILE_SIZE_8G;  //4G
+    private static final long FILE_SIZE_16G = 16 * 1024 * 1024 * 1024L;  //4G
+    private static final long FILE_SIZE = FILE_SIZE_16G;  //4G
     private static final int REGION_SIZE = 512 * 1024 * 1024;  //4G
     private static final Logger LOGGER = LoggerFactory.getLogger(Application.class);
     private static final TraceLogComparator COMPARATOR = new TraceLogComparator();
