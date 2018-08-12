@@ -16,7 +16,7 @@ abstract public class MessageQueue {
     }
 
 
-    abstract void put(byte message[]);
+    abstract void put(byte message[], int len);
     abstract List<byte[]> get(long startIndex, long len);
     abstract void commit();
 }

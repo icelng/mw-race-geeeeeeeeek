@@ -28,14 +28,16 @@ public class ResidentPageCachePool {
         System.out.println("The max size of heap memory is: " + (Runtime.getRuntime().maxMemory() >> 20) + "M");
 
         for (int i = 0;i < poolSize;i++) {
-            if (((long) i) * pageSize < maxDirectMemorySize) {
-                /*优先使用堆外内存*/
-                byteBuffers.addFirst(ByteBuffer.allocateDirect(pageSize));
-                directMemorySize += pageSize;
-            } else {
-                byteBuffers.addFirst(ByteBuffer.allocate(pageSize));
-                heapMemorySize += pageSize;
-            }
+            byteBuffers.addFirst(ByteBuffer.allocate(pageSize));
+            heapMemorySize += pageSize;
+//            if (((long) i) * pageSize < maxDirectMemorySize) {
+//                /*优先使用堆外内存*/
+//                byteBuffers.addFirst(ByteBuffer.allocateDirect(pageSize));
+//                directMemorySize += pageSize;
+//            } else {
+//                byteBuffers.addFirst(ByteBuffer.allocate(pageSize));
+//                heapMemorySize += pageSize;
+//            }
         }
 
         System.out.println(String.format("%dM DirectByteBuffer have be allocated!", directMemorySize >> 20));

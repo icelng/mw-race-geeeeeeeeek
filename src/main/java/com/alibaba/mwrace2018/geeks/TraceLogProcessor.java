@@ -1,54 +1,107 @@
 package com.alibaba.mwrace2018.geeks;
 
+import com.google.common.io.CharSink;
+import com.google.common.io.Files;
 import com.google.common.io.LineProcessor;
+import com.google.common.util.concurrent.RateLimiter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
+import java.nio.charset.Charset;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author 奥陌
  */
 public class TraceLogProcessor implements LineProcessor<Result> {
+    private static final Logger logger = LoggerFactory.getLogger(TraceLogByteProcessor.class);
 
     private static final int TIMEOUT_THRESHOLD = 200;
     private static final String RESULT_CODE_ERROR = "01";
+    private static final int TERM_LEN = 256;
+    private static final TraceLogComparator COMPARATOR = new TraceLogComparator();
 
-    private IdlePageManager idlePageManager;
-    private StoreIO storeIO;
-    private ResidentPageCachePool residentPageCachePool;
+    private Object lock = new Object();
+    private FlushService flushService;
+    private ProcessService processService;
+
+    private Map<String, TraceLogList> traceLogListMap = new ConcurrentHashMap<>();
+
+    private AtomicInteger curTerm = new AtomicInteger(0);
+    private AtomicInteger termDays = new AtomicInteger(0);
 
     private Result result = new Result();
 
+    private String outputDir;
 
-    public TraceLogProcessor(IdlePageManager idlePageManager, StoreIO storeIO, ResidentPageCachePool residentPageCachePool) {
+    public TraceLogProcessor(String outputDir) {
         super();
-        this.idlePageManager = idlePageManager;
-        this.storeIO = storeIO;
-        this.residentPageCachePool = residentPageCachePool;
+        this.outputDir = outputDir;
+        flushService = new FlushService(outputDir);
+        processService = new ProcessService(this);
     }
 
     @Override
-    public boolean processLine(String s) throws UnsupportedEncodingException {
-        TraceLog traceLog = new TraceLog(s);
-        String seqNum = s.substring(21, 24);
-
-        if (!this.result.getSeqNumQueueMap().containsKey(seqNum)) {
-            /*如果不存在顺序号对应的队列*/
-            this.result.getSeqNumQueueMap().put(seqNum, new AppendedIndexMessageQueue(idlePageManager, storeIO,residentPageCachePool));
-        }
-
-        MessageQueue seqNumMessageQueue = this.result.getSeqNumQueueMap().get(seqNum);
-        seqNumMessageQueue.put(s.getBytes("UTF-8"));
-
-        if (this.select(traceLog)) {
-            this.result.getTargetTraceIds().add(traceLog.getTraceId());
-        }
-
+    public boolean processLine(String s) throws IOException {
+        processService.requestProcess(s);
         return true;
+    }
+
+    public void doProcess(String s) {
+        TraceLog traceLog = new TraceLog(s);
+//        String seqNum = s.substring(21, 24);
+
+        synchronized (lock) {
+            if (!traceLogListMap.containsKey(traceLog.getTraceId())) {
+                TraceLogList traceLogList = new TraceLogList();
+                traceLogListMap.put(traceLog.getTraceId(), traceLogList);
+            }
+
+            TraceLogList traceLogList = traceLogListMap.get(traceLog.getTraceId());
+            traceLogList.getTraceLogs().add(traceLog);
+            traceLogList.setTerm(curTerm.get());
+
+            if (this.select(traceLog)) {
+                traceLogList.setTarget(true);
+            }
+
+            if (termDays.getAndAdd(1) >= TERM_LEN) {
+                /*满一任期*/
+                Set<String> traceIds = traceLogListMap.keySet();
+                for (String traceId : traceIds) {
+                    traceLogList = traceLogListMap.get(traceId);
+
+                    if (traceLogList.getTerm() != curTerm.get()) {
+                        /*当前任期无活动，则判决传输完毕*/
+                        traceLogListMap.remove(traceId);
+                        if (traceLogList.isTarget()) {
+                            /*是输出目标*/
+//                        String filePath = this.outputDir + "/" + traceId;
+//                        CharSink sink = Files.asCharSink(new File(filePath), Charset.forName("UTF-8"));
+//                        sink.writeLines(this.sort(traceLogList.getTraceLogs()));
+                            flushService.requestFlush(traceLogList);
+                        }
+                    }
+
+                }
+
+                termDays.set(0);
+                curTerm.getAndAdd(1);
+            }
+        }
     }
 
     @Override
     public Result getResult() {
+        flushService.stop();
+        processService.stop();
         return this.result;
     }
 
@@ -68,6 +121,15 @@ public class TraceLogProcessor implements LineProcessor<Result> {
             return true;
         }
         return log.getUserData() != null && log.getUserData().contains("@force=1");
+    }
+
+    private List<String> sort(List<TraceLog> logs) {
+        List<String> lines = new ArrayList<>(logs.size());
+        Collections.sort(logs, COMPARATOR);
+        for (TraceLog log : logs) {
+            lines.add(log.getLine());
+        }
+        return lines;
     }
 
 }

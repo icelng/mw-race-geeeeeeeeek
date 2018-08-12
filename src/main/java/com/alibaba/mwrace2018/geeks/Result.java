@@ -23,6 +23,7 @@ class Result {
      */
 //    private Map<String, List<TraceLog>> logs = new HashMap<>();
 
+//    private Map<String, TraceLogList> traceLogListMap = new HashMap<>();
 
     /**
      * 保存命中的 TraceId.

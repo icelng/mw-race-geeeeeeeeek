@@ -1,9 +1,6 @@
 package com.alibaba.mwrace2018.geeks;
 
-import com.google.common.io.CharSink;
-import com.google.common.io.Files;
-import com.google.common.io.Resources;
-import com.google.common.io.CharSource;
+import com.google.common.io.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,10 +13,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author 奥陌
@@ -29,7 +23,8 @@ public class Application implements CommandLineRunner {
 
     private static final String MESSAGES_FILE_PATH = "./log";
     private static final long FILE_SIZE_8G = 8 * 1024 * 1024 * 1024L;  //4G
-    private static final long FILE_SIZE = FILE_SIZE_8G;  //4G
+    private static final long FILE_SIZE_16G = 16 * 1024 * 1024 * 1024L;  //4G
+    private static final long FILE_SIZE = FILE_SIZE_16G;  //4G
     private static final int REGION_SIZE = 512 * 1024 * 1024;  //4G
     private static final Logger LOGGER = LoggerFactory.getLogger(Application.class);
     private static final TraceLogComparator COMPARATOR = new TraceLogComparator();
@@ -37,7 +32,7 @@ public class Application implements CommandLineRunner {
 
     private IdlePageManager idlePageManager;
     private StoreIO storeIO;
-    private ResidentPageCachePool residentPageCachePool;
+    private ResidentPageCachePool residentPageCachePool = null;
 
     /**
      * 获取数据的 URL 地址.
@@ -58,56 +53,31 @@ public class Application implements CommandLineRunner {
     @Override
     public void run(String... strings) throws Exception {
         Result result = this.process();
+        if (result.getTargetTraceIds().size() == 0) {
+            LOGGER.info("Error!!!the target is empty!!!!!!!!");
+        }
         this.output(result);
     }
 
     private Result process() throws IOException {
         LOGGER.info("dataUrl = {}", this.dataUrl);
 
-        storeIO = new StoreIO(MESSAGES_FILE_PATH, FILE_SIZE, REGION_SIZE);
-        idlePageManager = new SingleUseIdlePageManager(FILE_SIZE, 4096);
-        residentPageCachePool = new ResidentPageCachePool(65535, 4096);
+//        storeIO = new StoreIO(outputDir + "/log", FILE_SIZE, REGION_SIZE);
+//        idlePageManager = new SingleUseIdlePageManager(FILE_SIZE, 1024);
+//        residentPageCachePool = new ResidentPageCachePool(65535, 1024);
 
-//        CharSource source = Resources.asCharSource(new URL(this.dataUrl), Charset.forName("UTF-8"));
-        URL url = Resources.getResource(this.dataUrl);
-        CharSource source = Resources.asCharSource(url, Charset.forName("UTF-8"));
-        TraceLogProcessor processor = new TraceLogProcessor(idlePageManager, storeIO, residentPageCachePool);
+//        ByteSource byteSource = Resources.asByteSource(new URL(this.dataUrl));
+        CharSource source = Resources.asCharSource(new URL(this.dataUrl), Charset.forName("UTF-8"));
+//        URL url = Resources.getResource(this.dataUrl);
+//        CharSource source = Resources.asCharSource(url, Charset.forName("UTF-8"));
+        TraceLogProcessor processor = new TraceLogProcessor(outputDir);
+//        TraceLogByteProcessor processor = new TraceLogByteProcessor(idlePageManager, storeIO, residentPageCachePool);
         return source.readLines(processor);
+//        return byteSource.read(processor);
     }
 
     private void output(Result result) throws IOException {
         LOGGER.info("outputDir = {}", this.outputDir);
-
-        for (String traceId : result.getTargetTraceIds()) {
-            String seqNum = traceId.substring(21, 24);
-            MessageQueue messageQueue = result.getSeqNumQueueMap().get(seqNum);
-            List<TraceLog> logs = new ArrayList<>();
-
-
-            long offset = 0;
-            while (true) {
-                List<byte[]> lines = messageQueue.get(offset, 10);
-
-                for (byte[] line : lines) {
-                    String strLine = new String(line);
-                    TraceLog traceLog = new TraceLog(strLine);
-                    if (traceLog.getTraceId().equals(traceId)) {
-                        logs.add(traceLog);
-                    }
-                }
-
-                if (lines.size() < 10) {
-                    /*说明取空了*/
-                    break;
-                }
-                offset += 10;
-            }
-
-            String filePath = this.outputDir + "/" + traceId;
-            LOGGER.info("filePath = {}", filePath);
-            CharSink sink = Files.asCharSink(new File(filePath), Charset.forName("UTF-8"));
-            sink.writeLines(this.sort(logs));
-        }
     }
 
     private List<String> sort(List<TraceLog> logs) {
