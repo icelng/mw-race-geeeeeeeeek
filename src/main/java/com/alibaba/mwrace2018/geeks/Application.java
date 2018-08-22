@@ -25,14 +25,9 @@ public class Application implements CommandLineRunner {
     private static final long FILE_SIZE_8G = 8 * 1024 * 1024 * 1024L;  //4G
     private static final long FILE_SIZE_16G = 16 * 1024 * 1024 * 1024L;  //4G
     private static final long FILE_SIZE = FILE_SIZE_16G;  //4G
-    private static final int REGION_SIZE = 512 * 1024 * 1024;  //4G
     private static final Logger LOGGER = LoggerFactory.getLogger(Application.class);
     private static final TraceLogComparator COMPARATOR = new TraceLogComparator();
 
-
-    private IdlePageManager idlePageManager;
-    private StoreIO storeIO;
-    private ResidentPageCachePool residentPageCachePool = null;
 
     /**
      * 获取数据的 URL 地址.
@@ -61,10 +56,6 @@ public class Application implements CommandLineRunner {
 
     private Result process() throws IOException {
         LOGGER.info("dataUrl = {}", this.dataUrl);
-
-//        storeIO = new StoreIO(outputDir + "/log", FILE_SIZE, REGION_SIZE);
-//        idlePageManager = new SingleUseIdlePageManager(FILE_SIZE, 1024);
-//        residentPageCachePool = new ResidentPageCachePool(65535, 1024);
 
 //        ByteSource byteSource = Resources.asByteSource(new URL(this.dataUrl));
         CharSource source = Resources.asCharSource(new URL(this.dataUrl), Charset.forName("UTF-8"));
