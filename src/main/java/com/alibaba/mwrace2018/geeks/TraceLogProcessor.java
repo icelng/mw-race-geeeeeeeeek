@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author 奥陌
  */
 public class TraceLogProcessor implements LineProcessor<Result> {
-    private static final Logger logger = LoggerFactory.getLogger(TraceLogByteProcessor.class);
+    private static final Logger logger = LoggerFactory.getLogger(TraceLogProcessor.class);
 
     private static final int TIMEOUT_THRESHOLD = 200;
     private static final String RESULT_CODE_ERROR = "01";
